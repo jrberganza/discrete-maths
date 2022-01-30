@@ -3,11 +3,11 @@
 ## Usage
 
 ```
-$ ./cifrado
+$ ./cifrado1
 Texto a cifrar: Hola
 Clave: 5
 Cifrado: iuba
-$ ./cifrado
+$ ./cifrado1
 Texto a cifrar: Un texto mas complejo!
 Clave: 12
 Cifrado: ju xurxr jam xrjdxuar!
