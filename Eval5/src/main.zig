@@ -12,10 +12,15 @@ pub fn main() anyerror!void {
     // Get process arguments. This function returns an iterator.
     var args_it = try std.process.argsWithAllocator(allocator);
     defer args_it.deinit();
-    _ = args_it.next() orelse unreachable; // executable name
+    // In zig 0.9.1, ArgIterator#next(Allocator) gives us the memory, so we must free it
+    // In zig 0.10.x, with ArgIterator#next(), the iterator still owns the memory, so deinit takes care of everything
+    const exec_name = try args_it.next(allocator) orelse unreachable; // executable name
+    allocator.free(exec_name); // We don't really care about it
     // If we don't get enough arguments we just error out
-    const arg_a = args_it.next() orelse return error.MissingArgumentA;
-    const arg_b = args_it.next() orelse return error.MissingArgumentB;
+    const arg_a = try args_it.next(allocator) orelse return error.MissingArgumentA;
+    defer allocator.free(arg_a);
+    const arg_b = try args_it.next(allocator) orelse return error.MissingArgumentB;
+    defer allocator.free(arg_b);
 
     const a = try std.fmt.parseInt(i128, arg_a, 10);
     const b = try std.fmt.parseInt(i128, arg_b, 10);
