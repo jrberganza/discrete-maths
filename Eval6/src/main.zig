@@ -28,28 +28,37 @@ pub fn main() anyerror!void {
     const b = try std.fmt.parseInt(u128, arg_b, 10);
     const n = try std.fmt.parseInt(u128, arg_n, 10);
 
-    var x: u128 = 1;
-    var i: u7 = 127;
-    while (i >= 0) : (i -= 1) {
-        const digit = @truncate(u1, b >> i);
-
-        if (digit == 1) {
-            x = (std.math.pow(u128, x, 2) * a) % n;
-        } else {
-            x = std.math.pow(u128, x, 2) % n;
-        }
-
-        if (i == 0) break;
-    }
+    const x = pow(u128, a, b, n);
 
     std_out.print("{}\n", .{x}) catch unreachable;
 }
 
-// A^B mod n
-// Representar B en binario = b_k-1 b_k-2 ... b_i ... b_1 b_0
-// Hacer x = 1
-// Para i = k-1, ... 0 hacer
-//     Si (b_i = 1) entonces
-//         x = x^2 * A mod n
-//     si no
-//         x = x^2 mod n
+/// Calculates the power of a^b withing a modulo n.
+/// All ints have to be of type T and T must be a unsigned integer.
+pub fn pow(comptime T: type, a: T, b: T, n: T) T {
+    if (@typeInfo(T).Int.signedness != .unsigned) {
+        @compileError("Int must be unsigned");
+    }
+    const int_bits = @typeInfo(T).Int.bits;
+
+    var x: T = 1;
+    // We need to read all bits from most significant to least significant
+    // So we get the the position of the most significant bit. In a u128, this is position 127
+    // Shifting right requires the shifting amount to be of just the correct int type so we do some
+    // math to calculate what size int we need.
+    var i: std.meta.Int(.unsigned, std.math.log2_int(u16, int_bits)) = int_bits - 1;
+    while (i >= 0) : (i -= 1) {
+        const digit = @truncate(u1, b >> i);
+
+        if (digit == 1) {
+            x = (std.math.pow(T, x, 2) * a) % n;
+        } else {
+            x = std.math.pow(T, x, 2) % n;
+        }
+
+        // i is unsigned. If we don't break here, the while loop will underflow.
+        if (i == 0) break;
+    }
+
+    return x;
+}
