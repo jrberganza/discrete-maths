@@ -9,15 +9,30 @@ pub fn main() anyerror!void {
     // Get standard output handle
     var std_out = std.io.getStdOut().writer();
 
+    // Get process arguments. This function returns an iterator.
     var args_it = try std.process.argsWithAllocator(allocator);
     defer args_it.deinit();
     _ = args_it.next() orelse unreachable; // executable name
+    // If we don't get enough arguments we just error out
     const arg_a = args_it.next() orelse return error.MissingArgumentA;
     const arg_b = args_it.next() orelse return error.MissingArgumentB;
 
     const a = try std.fmt.parseInt(i128, arg_a, 10);
     const b = try std.fmt.parseInt(i128, arg_b, 10);
 
+    const x = invMult(i128, a, b);
+
+    std_out.print("{}\n", .{x}) catch unreachable;
+}
+
+/// Calculates the multiplicative inverse or reciprocal of a number A within a modulo B.
+/// Both ints have to be of type T and T must be a signed integer.
+pub fn invMult(comptime T: type, a: T, b: T) T {
+    if (@typeInfo(T).Int.signedness != .signed) {
+        @compileError("Int must be signed");
+    }
+
+    // Initialize all variables
     var g_0 = b;
     var g_1 = a;
     var u_0: i128 = 1;
@@ -25,6 +40,9 @@ pub fn main() anyerror!void {
     var v_0: i128 = 0;
     var v_1: i128 = 1;
 
+    // In the pseudocode, there's a variable i that gets incremented after each loop
+    // and we work with variables such as g_(i-1), g_i, g_(i+1)
+    // In this code, we get the same behaviour by swapping values around
     while (g_1 != 0) {
         const y = @divTrunc(g_0, g_1);
         const g_2 = g_0 - y * g_1;
@@ -38,24 +56,11 @@ pub fn main() anyerror!void {
         v_1 = v_2;
     }
 
+    // Basically modulo
     if (v_0 < 0) {
         v_0 = v_0 + b;
     }
 
-    std_out.print("{}\n", .{v_0}) catch unreachable;
+    // The result is in v_(i-1), which corresponds to v_0
+    return v_0;
 }
-
-// Hacer (g0, g1, u0, u1, v0, v1, i)
-//     = (B, A, 1, 0, 0, 1, 1)
-//
-// Mientras g1 != 0 hacer:
-//     Hacer y_i+1 = parte entera (g_i-1/g_i)
-//     Hacer g_i+1 = g_i-1 - y_i+1 * g_i
-//     Hacer u_i+1 = u_i-1 - y_i+1 * u_i
-//     Hacer v_i+1 = v_i-1 - y_i+1 * v_i
-//     Hacer i     = i+1
-//
-// Si (v_i-1 < 0)
-//     Hacer v_i-1 = v_i-1 + B
-//
-// Hacer x = v_i-1
