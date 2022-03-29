@@ -40,9 +40,9 @@ pub fn invMult(comptime T: type, a: T, b: T) T {
     var v_0: i128 = 0;
     var v_1: i128 = 1;
 
-    // In the pseudocode, there's a variable i that gets incremented after each loop
-    // and we work with variables such as g_(i-1), g_i, g_(i+1)
-    // In this code, we get the same behaviour by swapping values around
+    // The pseudocode has a variable i that gets incremented after each loop
+    // and it works with variables such as g_(i-1), g_i, g_(i+1)
+    // In this code, we do the same thing by swapping values around
     while (g_1 != 0) {
         const y = @divTrunc(g_0, g_1);
         const g_2 = g_0 - y * g_1;
